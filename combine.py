@@ -104,32 +104,34 @@ def get_files(directory = os.getcwd(), general_name = "Scribe", general_term = "
 
 
 
-def merge_files():
+def merge_files(cleanup = True): # cleanup = True means remove all the random 0's
     file_list = get_files() # relevant .xlsx files list
     df_total = pd.DataFrame()
-    df1 = pd.DataFrame()
-    df2 = pd.DataFrame()
-    
+    df_list = []
     
     for file in file_list:
         excel_file = pd.ExcelFile(file)
         sheets = excel_file.sheet_names
+        for sheet in sheets:
+            if (sheet == "Gain"):
+                df = excel_file.parse(sheet_name=sheet)
+                df_list.append(df)
         
-        if file == "Scribe16_ADC_Analysis.xlsx": #TODO idea can merge them but highest column # must be first for concat... so can merge df1 and df2 with lines 156-159 if df1 has more columns than df2
-            df1 = excel_file.parse(sheet_name="Gain")
-            #print(df1)
-            
-            
-        if file == "Scribe1_ADC_Analysis.xlsx":
-            df2 = excel_file.parse(sheet_name="Gain")
-            #print(df2)
-        
-    combo = [df1, df2]
-    result = pd.concat(combo)
-    print(result)
+    #combo = [df1, df2]
+    #result = pd.concat(combo)
+    #print(result)
     #result.to_excel('combined_file.xlsx')
-
-    #print(df_total) 
+    count = 0
+    for df in df_list:
+        count = count + len(df)
+    
+    print(count)
+    #result = pd.concat(df_list)
+    #print(result)
+    #result.to_excel('combined_file_GAIN.xlsx')
+    
+    #TODO need to deal with the random columns on the right of "Tad"... either remove it or have them next to tad in the space where each respective file actually starts in the final merged
+    
     print("Done")
 
 merge_files()
