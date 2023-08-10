@@ -84,9 +84,6 @@ def xlsx(dataframe, excel_filename, sheetname):
     
     
     
-def count_column_entries(df):
-    return df.count(axis="columns")  
-    
     
 def get_files(directory = os.getcwd(), general_name = "Scribe", general_term = "Analysis"): # Default: Scribe_(number)_ADC_Analysis
     count = 0 # Keeps track of number of files found
@@ -104,32 +101,46 @@ def get_files(directory = os.getcwd(), general_name = "Scribe", general_term = "
 
 
 
+def merge_sheets(file_list, sheetname):
+    df_sheet_list = []
+    for file in file_list:
+        excel_file = pd.ExcelFile(file)
+        sheets = excel_file.sheet_names
+        for sheet in sheets:
+            if (sheet == sheetname):
+                df = excel_file.parse(sheet_name=sheet)
+                df_sheet_list.append(df)
+                
+    combined_sheets = pd.concat(df_sheet_list)
+    return combined_sheets
+
+
+
+
+def drop_columns(df, unique_item_qty=2):
+    result = df
+    non_null_counts = df.notnull().sum()
+    columns_to_drop = non_null_counts[non_null_counts < unique_item_qty].index
+    result = df.drop(columns=columns_to_drop)
+    return result
+
+
+def drop_rows(df, unique_item_qty=2):
+    result = df
+    result = df.dropna(thresh=unique_item_qty)
+    return result
+
 def merge_files(cleanup = True): # cleanup = True means remove all the random 0's
     file_list = get_files() # relevant .xlsx files list
     df_total = pd.DataFrame()
     df_list = []
     
-    for file in file_list:
-        excel_file = pd.ExcelFile(file)
-        sheets = excel_file.sheet_names
-        for sheet in sheets:
-            if (sheet == "Gain"):
-                df = excel_file.parse(sheet_name=sheet)
-                df_list.append(df)
-        
-    #combo = [df1, df2]
-    #result = pd.concat(combo)
-    #print(result)
-    #result.to_excel('combined_file.xlsx')
-    count = 0
-    for df in df_list:
-        count = count + len(df)
+    merged = merge_sheets(file_list, "Gain")
     
-    print(count)
-    #result = pd.concat(df_list)
-    #print(result)
-    #result.to_excel('combined_file_GAIN.xlsx')
-    
+    merged = drop_rows(merged, 3)
+    merged = drop_columns(merged)
+    #print(merged.count(axis='columns'))
+    merged.to_excel("combined.xlsx")
     #TODO need to deal with the random columns on the right of "Tad"... either remove it or have them next to tad in the space where each respective file actually starts in the final merged
     
     print("Done")
@@ -142,3 +153,11 @@ merge_files()
 #https://pythoninoffice.com/use-python-to-combine-multiple-excel-files/
 #https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.drop.html
 #https://www.w3schools.com/python/pandas/ref_df_count.asp#:~:text=The%20count()%20method%20counts,each%20row%20(or%20column).
+
+#https://github.com/p-o-f/ScribeCombine
+
+
+#https://stackoverflow.com/questions/33144813/quickly-drop-dataframe-columns-with-only-one-distinct-value
+#https://www.geeksforgeeks.org/drop-rows-from-the-dataframe-based-on-certain-condition-applied-on-a-column/#
+
+# https://stackoverflow.com/questions/45570984/in-pandas-is-inplace-true-considered-harmful-or-not TODO do not use inplace like ever
