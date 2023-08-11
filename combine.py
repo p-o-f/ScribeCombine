@@ -125,27 +125,58 @@ def drop_columns(df, unique_item_qty=2):
     return result
 
 
+
+
 def drop_rows(df, unique_item_qty=2):
     result = df
     result = df.dropna(thresh=unique_item_qty)
     return result
 
+
+
+
 def merge_files(cleanup = True): # cleanup = True means remove all the random 0's
     file_list = get_files() # relevant .xlsx files list
-    df_total = pd.DataFrame()
-    df_list = []
     
     merged = merge_sheets(file_list, "Gain")
     
-    merged = drop_rows(merged, 3)
-    merged = drop_columns(merged)
-    #print(merged.count(axis='columns'))
-    merged.to_excel("combined.xlsx")
-    #TODO need to deal with the random columns on the right of "Tad"... either remove it or have them next to tad in the space where each respective file actually starts in the final merged
+    if (cleanup is True):
+        merged = drop_rows(merged)
     
+    merged = drop_columns(merged)
+
+    #merged.to_excel("combined.xlsx")
+
     print("Done")
 
-merge_files()
+#merge_files()
+
+def counter():
+    file_list = get_files()
+    check_list = []
+    print(len(file_list))
+    df_total = pd.DataFrame()
+    count = 0
+    for file in file_list:
+        excel_file = pd.ExcelFile(file)
+        sheets = excel_file.sheet_names
+        for sheet in sheets:
+            if (sheet == "Offset"):
+                count = count + 1
+                df = excel_file.parse(sheet_name=sheet)
+                print(df)
+                print(file)
+                print()
+                print(count)
+                print()
+                check_list.append(file)
+    
+
+    print(len(file_list))
+    print(len(check_list))
+counter()   
+print("done")
+
 
 
 
@@ -161,3 +192,17 @@ merge_files()
 #https://www.geeksforgeeks.org/drop-rows-from-the-dataframe-based-on-certain-condition-applied-on-a-column/#
 
 # https://stackoverflow.com/questions/45570984/in-pandas-is-inplace-true-considered-harmful-or-not TODO do not use inplace like ever
+
+
+# TODO Scribe11 INL is weird... -> need to apply a CLEAR on sort and filter and then it should work as normal... maybe manually do it.. last resort.. if not possible, may need to delete the extraneous columns by name
+# TODO make a .txt file with ommitted data like the scribe11 weird columns upon finishing everything
+# https://stackoverflow.com/questions/47678962/how-to-cancel-auto-filter-on-table-with-openpyxl
+
+#TODO count number of columns for each sheet to look for discrepancies (like DNLmn DNLmx etc.)
+#TODO note that DNL_Mn is labeled weird (should be DNLmn) on scribe16 in some .txt file.. need to parse the DNL min and max in a specific way because of this
+# GAIN good
+# MC good
+# INL good
+# Offset good
+# DNLmn good
+# DNLmx good
